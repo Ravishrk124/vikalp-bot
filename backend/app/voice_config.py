@@ -81,15 +81,15 @@ def load_config() -> VoiceConfig:
         openai_api_key=os.getenv("OPENAI_API_KEY", "").strip(),
         
         # STT
-        stt_provider=STTProvider(os.getenv("STT_PROVIDER", "openai").lower().strip()),
+        stt_provider=STTProvider(os.getenv("STT_PROVIDER", "local_whisper").lower().strip()),
         stt_model=os.getenv("STT_MODEL", "whisper-1").strip(),
         
         # LLM
-        llm_provider=LLMProvider(os.getenv("LLM_PROVIDER", "openai").lower().strip()),
+        llm_provider=LLMProvider(os.getenv("LLM_PROVIDER", "openrouter").lower().strip()),
         llm_model=os.getenv("LLM_MODEL", "gpt-4o").strip(),
         
         # TTS
-        tts_provider=TTSProvider(os.getenv("TTS_PROVIDER", "openai").lower().strip()),
+        tts_provider=TTSProvider(os.getenv("TTS_PROVIDER", "gtts").lower().strip()),
         tts_model=os.getenv("TTS_MODEL", "tts-1").strip(),
         tts_voice=os.getenv("TTS_VOICE", "alloy").strip(),
         
