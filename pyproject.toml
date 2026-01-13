@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vikalp-ai-backend"
+version = "1.0.0"
+description = "Vikalp AI Voice Tutor Backend"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi==0.115.12",
+    "uvicorn[standard]==0.34.0",
+    "pydantic==2.10.5",
+    "python-multipart==0.0.20",
+    "gtts==2.5.4",
+    "httpx==0.28.1",
+    "faster-whisper==1.1.0",
+    "websockets==14.1",
+    "python-dotenv==1.0.1",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["backend*"]

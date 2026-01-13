@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: vikalp-ai-backend
+    runtime: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: VOICE_STT_PROVIDER
+        value: local_whisper
+      - key: VOICE_LLM_PROVIDER
+        value: openrouter
+      - key: VOICE_TTS_PROVIDER
+        value: gtts
+    healthCheckPath: /health

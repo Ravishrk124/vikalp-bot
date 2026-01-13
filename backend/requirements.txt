@@ -1,0 +1,9 @@
+fastapi==0.115.12
+uvicorn[standard]==0.34.0
+pydantic==2.10.5
+python-multipart==0.0.20
+gtts==2.5.4
+httpx==0.28.1
+faster-whisper==1.1.0
+websockets==14.1
+python-dotenv==1.0.1
