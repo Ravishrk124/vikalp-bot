@@ -99,7 +99,7 @@ def load_config() -> VoiceConfig:
         
         # OpenRouter (fallback)
         openrouter_api_key=os.getenv("OPENROUTER_API_KEY", "").strip(),
-        openrouter_model=os.getenv("OPENROUTER_MODEL", "mistralai/mistral-small").strip(),
+        openrouter_model=os.getenv("OPENROUTER_MODEL", "meta-llama/llama-3.2-3b-instruct:free").strip(),
         openrouter_base=os.getenv("OPENROUTER_BASE", "https://openrouter.ai/api").strip(),
         
         # Local Whisper (fallback)
