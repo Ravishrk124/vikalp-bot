@@ -50,6 +50,17 @@ export default function LeadCaptureModal({ grade, onClose }: LeadCaptureModalPro
         throw new Error(data.detail || "Failed to create session");
       }
 
+      // Save session to localStorage for persistence across reloads
+      const sessionData = {
+        session_id: data.session_id,
+        grade: grade,
+        name: formData.name,
+        intent: formData.intent,
+        created_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+      };
+      localStorage.setItem('vikalp_session', JSON.stringify(sessionData));
+
       // Redirect to chat page with session ID
       router.push(`/chat?session_id=${data.session_id}`);
     } catch (err: any) {

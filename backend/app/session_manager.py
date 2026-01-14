@@ -31,6 +31,74 @@ SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "Vikalp Online School")
 # Sessions stored in memory (can be replaced with DB later)
 _sessions: Dict[str, "Session"] = {}
 
+# Sessions file path for persistence
+SESSIONS_FILE = os.path.join(DATA_DIR, "sessions.json")
+
+# Session expiry in days
+SESSION_EXPIRY_DAYS = 7
+
+
+def _save_sessions_to_file():
+    """Save all sessions to JSON file for persistence"""
+    try:
+        sessions_data = {}
+        for sid, session in _sessions.items():
+            sessions_data[sid] = session.to_dict()
+        
+        with open(SESSIONS_FILE, "w", encoding="utf-8") as f:
+            json.dump(sessions_data, f, indent=2, ensure_ascii=False)
+        print(f"[SESSION] Saved {len(sessions_data)} sessions to {SESSIONS_FILE}")
+    except Exception as e:
+        print(f"[SESSION] Error saving sessions: {e}")
+
+
+def _load_sessions_from_file():
+    """Load sessions from JSON file on startup"""
+    global _sessions
+    if not os.path.exists(SESSIONS_FILE):
+        print("[SESSION] No sessions file found, starting fresh")
+        return
+    
+    try:
+        with open(SESSIONS_FILE, "r", encoding="utf-8") as f:
+            sessions_data = json.load(f)
+        
+        loaded_count = 0
+        expired_count = 0
+        now = datetime.utcnow()
+        
+        for sid, data in sessions_data.items():
+            # Check if session is expired (older than 7 days)
+            created_at = datetime.fromisoformat(data["created_at"].replace("Z", ""))
+            age_days = (now - created_at).days
+            
+            if age_days > SESSION_EXPIRY_DAYS:
+                expired_count += 1
+                continue
+            
+            # Reconstruct session
+            conversation = [
+                ConversationTurn(**turn) for turn in data.get("conversation", [])
+            ]
+            session = Session(
+                session_id=data["session_id"],
+                grade=data["grade"],
+                name=data["name"],
+                email=data["email"],
+                mobile=data["mobile"],
+                intent=data["intent"],
+                created_at=data["created_at"],
+                updated_at=data.get("updated_at", data["created_at"]),
+                conversation=conversation,
+                detected_language=data.get("detected_language")
+            )
+            _sessions[sid] = session
+            loaded_count += 1
+        
+        print(f"[SESSION] Loaded {loaded_count} sessions, expired {expired_count}")
+    except Exception as e:
+        print(f"[SESSION] Error loading sessions: {e}")
+
 @dataclass
 class ConversationTurn:
     """Single turn in conversation"""
@@ -219,6 +287,7 @@ def create_session(grade: str, name: str, email: str, mobile: str, intent: str) 
         intent=intent
     )
     _sessions[session_id] = session
+    _save_sessions_to_file()  # Persist to file
     return session
 
 def get_session(session_id: str) -> Optional[Session]:
@@ -285,3 +354,6 @@ def get_transcript_text(session_id: str) -> Optional[str]:
     
     return "\n".join(lines)
 
+
+# Load sessions on module import (after all classes are defined)
+_load_sessions_from_file()

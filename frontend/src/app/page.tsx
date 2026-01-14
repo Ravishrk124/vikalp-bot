@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import GradeSelection from "../components/GradeSelection";
 import CourseSelection from "../components/CourseSelection";
 import LeadCaptureModal from "../components/LeadCaptureModal";
@@ -8,9 +9,47 @@ import LeadCaptureModal from "../components/LeadCaptureModal";
 type TabType = "school" | "courses";
 
 export default function HomePage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>("school");
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [showLeadForm, setShowLeadForm] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  // Check for existing valid session on mount
+  useEffect(() => {
+    const storedSession = localStorage.getItem('vikalp_session');
+    if (storedSession) {
+      try {
+        const session = JSON.parse(storedSession);
+        const expiresAt = new Date(session.expires_at);
+
+        // If session is still valid (not expired), redirect to chat
+        if (expiresAt > new Date() && session.session_id) {
+          router.push(`/chat?session_id=${session.session_id}`);
+          return;
+        } else {
+          // Session expired, clear it
+          localStorage.removeItem('vikalp_session');
+        }
+      } catch (e) {
+        // Invalid session data, clear it
+        localStorage.removeItem('vikalp_session');
+      }
+    }
+    setCheckingSession(false);
+  }, [router]);
+
+  // Show loading while checking session
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking session...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleItemSelect = (item: string) => {
     setSelectedItem(item);
@@ -67,8 +106,8 @@ export default function HomePage() {
           <button
             onClick={() => setActiveTab("school")}
             className={`px-3 sm:px-6 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all ${activeTab === "school"
-                ? "bg-green-600 text-white"
-                : "text-gray-600 hover:bg-gray-100"
+              ? "bg-green-600 text-white"
+              : "text-gray-600 hover:bg-gray-100"
               }`}
           >
             🏫 <span className="hidden xs:inline">Accredited </span>School
@@ -76,8 +115,8 @@ export default function HomePage() {
           <button
             onClick={() => setActiveTab("courses")}
             className={`px-3 sm:px-6 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all ${activeTab === "courses"
-                ? "bg-green-600 text-white"
-                : "text-gray-600 hover:bg-gray-100"
+              ? "bg-green-600 text-white"
+              : "text-gray-600 hover:bg-gray-100"
               }`}
           >
             📚 <span className="hidden xs:inline">Online </span>Classes
