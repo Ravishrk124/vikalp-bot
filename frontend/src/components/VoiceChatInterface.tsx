@@ -458,11 +458,17 @@ export default function VoiceChatInterface({
       {/* Fixed Header - Responsive */}
       <header className="bg-white border-b border-gray-200 px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between shadow-sm flex-shrink-0">
         <div className="flex items-center gap-2 sm:gap-3">
-          <a href="/" className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-full transition-colors">
+          <button
+            onClick={() => {
+              localStorage.removeItem('vikalp_session');
+              window.location.href = '/';
+            }}
+            className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
             <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-          </a>
+          </button>
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white font-bold text-sm sm:text-base">
               V
