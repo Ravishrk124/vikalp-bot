@@ -49,6 +49,7 @@ export default function VoiceChatInterface({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const realtimeAudioBufferRef = useRef<Float32Array[]>([]);
+  const speechRecognitionRef = useRef<any>(null);
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -264,34 +265,60 @@ export default function VoiceChatInterface({
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: architectureMode === "realtime"
-          ? { sampleRate: 24000, channelCount: 1 }
-          : true
-      });
+      // Use Web Speech API for browser-based transcription (free, no backend needed)
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
-      if (architectureMode === "realtime") {
-        // Realtime mode: stream audio directly via WebSocket
-        await startRealtimeRecording(stream);
-      } else {
-        // Chained mode: record and upload
-        const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm";
-        const recorder = new MediaRecorder(stream, { mimeType });
-        mediaRecorderRef.current = recorder;
-        audioChunksRef.current = [];
-
-        recorder.ondataavailable = (e) => { if (e.data.size) audioChunksRef.current.push(e.data); };
-        recorder.onstop = async () => {
-          stream.getTracks().forEach((t) => t.stop());
-          await uploadAndTranscribe();
-        };
-
-        recorder.start();
+      if (!SpeechRecognition) {
+        // Fallback: show error and suggest typing
+        alert("Speech recognition not supported in this browser. Please use Chrome, Edge, or Safari, or type your message.");
+        return;
       }
 
+      const recognition = new SpeechRecognition();
+      speechRecognitionRef.current = recognition;
+
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = currentLanguage === 'hindi' ? 'hi-IN' : 'en-US';
+
+      let finalTranscript = '';
+
+      recognition.onresult = (event: any) => {
+        let interimTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript + ' ';
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+        setCurrentTranscript(finalTranscript + interimTranscript);
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error('Speech recognition error:', event.error);
+        if (event.error === 'not-allowed') {
+          alert('Microphone access denied. Please allow microphone access in your browser settings.');
+        }
+        setIsRecording(false);
+      };
+
+      recognition.onend = () => {
+        // Only process if we have a transcript and recording was stopped intentionally
+        if (finalTranscript.trim() && !isRecording) {
+          sendMessage(finalTranscript.trim());
+        }
+        setIsRecording(false);
+      };
+
+      recognition.start();
       setIsRecording(true);
       setCurrentTranscript("");
-    } catch (e) { console.error("Microphone access error:", e); }
+    } catch (e) {
+      console.error("Speech recognition error:", e);
+      alert("Could not start speech recognition. Please check microphone permissions.");
+    }
   };
 
   const startRealtimeRecording = async (stream: MediaStream) => {
@@ -327,7 +354,14 @@ export default function VoiceChatInterface({
   };
 
   const stopRecording = () => {
-    if (architectureMode === "realtime") {
+    if (speechRecognitionRef.current) {
+      // Web Speech API mode: stop recognition
+      speechRecognitionRef.current.stop();
+      const transcript = currentTranscript.trim();
+      if (transcript) {
+        sendMessage(transcript);
+      }
+    } else if (architectureMode === "realtime") {
       // Realtime mode: commit audio and cleanup
       wsRef.current?.send(JSON.stringify({ type: "audio_commit" }));
       const refs = mediaRecorderRef.current as any;
@@ -343,6 +377,7 @@ export default function VoiceChatInterface({
       }
     }
     setIsRecording(false);
+    setCurrentTranscript("");
   };
 
   const uploadAndTranscribe = async () => {
