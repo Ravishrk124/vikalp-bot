@@ -65,9 +65,15 @@ function ChatPageContent() {
           <div className="text-5xl mb-4">😕</div>
           <h2 className="text-xl font-bold text-gray-900 mb-2">Session Error</h2>
           <p className="text-gray-600 mb-6">{error || "Session not found"}</p>
-          <a href="/" className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">
+          <button
+            onClick={() => {
+              localStorage.removeItem('vikalp_session');
+              window.location.href = '/';
+            }}
+            className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
+          >
             Go to Home
-          </a>
+          </button>
         </div>
       </div>
     );

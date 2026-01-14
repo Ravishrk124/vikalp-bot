@@ -305,10 +305,8 @@ export default function VoiceChatInterface({
       };
 
       recognition.onend = () => {
-        // Only process if we have a transcript and recording was stopped intentionally
-        if (finalTranscript.trim() && !isRecording) {
-          sendMessage(finalTranscript.trim());
-        }
+        // Recognition ended - set recording to false
+        // Note: Don't send message here, stopRecording handles it
         setIsRecording(false);
       };
 
@@ -355,9 +353,10 @@ export default function VoiceChatInterface({
 
   const stopRecording = () => {
     if (speechRecognitionRef.current) {
-      // Web Speech API mode: stop recognition
-      speechRecognitionRef.current.stop();
+      // Web Speech API mode: stop recognition and send message
       const transcript = currentTranscript.trim();
+      speechRecognitionRef.current.stop();
+      speechRecognitionRef.current = null; // Clear ref to prevent double handling
       if (transcript) {
         sendMessage(transcript);
       }
